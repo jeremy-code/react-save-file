@@ -44,11 +44,13 @@ const App = () => {
   return (
     <div>
       <button
-        data-pending={isPending}
+        data-testid="save-button"
+        data-pending={!!isPending}
         onClick={(e) => {
           e.preventDefault();
           const newBlob = new Blob([currText]);
           startTransition(async () => {
+            console.log(new Date().toISOString(), "- Promise starts");
             try {
               const newHandle = await showSaveFilePicker();
               const writableStream = await newHandle.createWritable();
@@ -56,10 +58,12 @@ const App = () => {
               await writableStream.close();
             } catch (e) {
               if (e instanceof DOMException && e.name === "AbortError") {
-                console.error("Aborted!", e);
+                console.error(new Date().toISOString(), "- Aborted!", e);
               } else {
                 throw e;
               }
+            } finally {
+              console.log(new Date().toISOString(), "- Promise concluded");
             }
             startTransition(() => {
               setBlob(newBlob);
@@ -67,9 +71,10 @@ const App = () => {
           });
         }}
       >
-        {isPending ? "Saving..." : "Save blob"}
+        Save blob
       </button>
       <button
+        data-testid="initialize-blob"
         onClick={(e) => {
           e.preventDefault();
           setBlob(new Blob([generateRandomHexString(1000)]));
@@ -78,7 +83,7 @@ const App = () => {
         Initialize blob
       </button>
       {blobTextPromise !== undefined ? (
-        <Suspense>
+        <Suspense fallback="Suspending...">
           <Textarea textPromise={blobTextPromise} onTextChange={setCurrText} />
         </Suspense>
       ) : null}
